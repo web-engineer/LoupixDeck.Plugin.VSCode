@@ -52,8 +52,8 @@ internal static class DialCatalog
             Left: new("editor.action.marker.prevInFiles", null, "Shift+F8", "Shift+F8", "Shift+F8"),
             Right: new("editor.action.marker.nextInFiles", null, "F8", "F8", "F8"),
             Press: new("workbench.actions.view.problems", null, "Shift+Cmd+M", "Ctrl+Shift+M", "Ctrl+Shift+M")),
-        new("GitChanges", "Git changes", "\U000F062C", // mdi-source-branch
-            "Turn to step through changed blocks in the active file; press to peek at the change inline.",
+        new("GitChanges", "Diffs", "\U000F062C", // mdi-source-branch
+            "Turn to step through the diffs (changed blocks) in the active file; press to peek at the change inline.",
             Left: new("workbench.action.editor.previousChange", null, "Shift+Alt+F5", "Shift+Alt+F5", "Shift+Alt+F5"),
             Right: new("workbench.action.editor.nextChange", null, "Alt+F5", "Alt+F5", "Alt+F5"),
             Press: new("editor.action.dirtydiff.next", null, "Alt+F3", "Alt+F3", "Alt+F3")),

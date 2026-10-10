@@ -178,7 +178,7 @@ Keys in *italics* are live keys.
 
 | Control | Top | Middle | Bottom |
 |---|---|---|---|
-| Left dials | Editor tabs (press: pick a recent editor) | Problems (press: Problems panel) | Git changes (press: peek at the change) |
+| Left dials | Editor tabs (press: pick a recent editor) | Problems (press: Problems panel) | Diffs: changed blocks in the file (press: peek at the change) |
 | Right dials | Window zoom (press: reset) | Editor scroll (press: focus the editor) | Debug step: left steps out, right steps over (press: continue) |
 
 The wheel has four modes: Scroll, Editor tabs, Problems and Navigation history.
@@ -491,7 +491,7 @@ needs the companion. Keys marked with an extension id need that extension.
 | `VSCode.EditorTabs` | Editor tabs | `workbench.action.previousEditor` (Shift+Cmd+LeftBracket) | `workbench.action.nextEditor` (Shift+Cmd+RightBracket) | `workbench.action.showAllEditorsByMostRecentlyUsed` |
 | `VSCode.EditorGroups` | Editor groups | `workbench.action.focusPreviousGroup` | `workbench.action.focusNextGroup` | `workbench.action.toggleMaximizeEditorGroup` (Cmd+K Cmd+M) |
 | `VSCode.ProblemSteps` | Problems | `editor.action.marker.prevInFiles` (Shift+F8) | `editor.action.marker.nextInFiles` (F8) | `workbench.actions.view.problems` (Shift+Cmd+M) |
-| `VSCode.GitChanges` | Git changes | `workbench.action.editor.previousChange` (Shift+Alt+F5) | `workbench.action.editor.nextChange` (Alt+F5) | `editor.action.dirtydiff.next` (Alt+F3) |
+| `VSCode.GitChanges` | Diffs | `workbench.action.editor.previousChange` (Shift+Alt+F5) | `workbench.action.editor.nextChange` (Alt+F5) | `editor.action.dirtydiff.next` (Alt+F3) |
 | `VSCode.Scroll` | Editor scroll | `editorScroll` (Ctrl+PageUp) | `editorScroll` (Ctrl+PageDown) | `workbench.action.focusActiveEditorGroup` |
 | `VSCode.MoveLine` | Move line | `editor.action.moveLinesUpAction` (Alt+Up) | `editor.action.moveLinesDownAction` (Alt+Down) | `editor.action.copyLinesDownAction` (Shift+Alt+Down) |
 | `VSCode.CursorHistory` | Cursor undo | `cursorUndo` (Cmd+U) | `cursorRedo` | `workbench.action.navigateToLastEditLocation` (Cmd+K Cmd+Q) |

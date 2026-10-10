@@ -79,7 +79,7 @@ var pages = new[]
 };
 
 // Left and right dials (top to bottom), then the wheel's modes.
-var leftDials = new[] { Dial("Tabs", "VSCode.EditorTabs"), Dial("Problems", "VSCode.ProblemSteps"), Dial("Changes", "VSCode.GitChanges") };
+var leftDials = new[] { Dial("Tabs", "VSCode.EditorTabs"), Dial("Problems", "VSCode.ProblemSteps"), Dial("Diffs", "VSCode.GitChanges") };
 var rightDials = new[] { Dial("Zoom", "VSCode.WindowZoom"), Dial("Scroll", "VSCode.Scroll"), Dial("Debug", "VSCode.DebugStep") };
 var wheel = new[]
 {
@@ -116,7 +116,7 @@ var manifest = new JsonObject
         "and references, multi-cursor and folding. Page Debug & Run: debugger state, folders of launch configurations and tasks, task and " +
         "terminal status, stepping, breakpoints and tests. Page Source & AI: Source Control, stage, commit, sync, pull, push, branches, the " +
         "graph, Copilot Chat, inline chat, agent mode and Claude Code. Page Accessibility: screen reader mode, Accessible View, accessibility " +
-        "help, hover, focus moves, a problems folder, signals, zoom reset and accessibility settings. Dials: editor tabs, problems, git changes, " +
+        "help, hover, focus moves, a problems folder, signals, zoom reset and accessibility settings. Dials: editor tabs, problems, diffs, " +
         "zoom, scroll and debug step; the wheel scrolls or steps through tabs, problems and navigation history. Live keys and folders need the " +
         "LoupixDeck Companion extension, which the plugin's settings install.",
     ["SourceDeviceSlug"] = "loupedeck-ct",
