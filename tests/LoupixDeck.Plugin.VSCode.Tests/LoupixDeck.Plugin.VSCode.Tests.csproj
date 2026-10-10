@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <!-- The plugin leaves the SDK to the host at run time; the tests are the host here. -->
+    <PackageReference Include="LoupixDeck.PluginSdk" Version="1.30.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Tests cover the plugin's own logic; nothing here calls into the host at run time. -->
+    <ProjectReference Include="../../LoupixDeck.Plugin.VSCode.csproj" AdditionalProperties="LoupixSkipInstall=true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Copies of VS Code's command list and the host's key-name and icon tables (CatalogTests). -->
+    <None Include="fixtures/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

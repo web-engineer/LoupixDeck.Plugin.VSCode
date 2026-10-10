@@ -1,0 +1,118 @@
+{
+  "name": "loupixdeck-companion",
+  "displayName": "LoupixDeck Companion",
+  "description": "Connects Visual Studio Code to the LoupixDeck plugin: run any command from a deck key and see live problems, git, debug, task and editor state on the deck.",
+  "version": "0.1.0",
+  "publisher": "web-engineer",
+  "license": "MIT",
+  "author": {
+    "name": "web-engineer",
+    "url": "https://www.web-engineer.co.uk/"
+  },
+  "homepage": "https://github.com/web-engineer/LoupixDeck.Plugin.VSCode#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/web-engineer/LoupixDeck.Plugin.VSCode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/web-engineer/LoupixDeck.Plugin.VSCode/issues"
+  },
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.93.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "loupixdeck",
+    "loupedeck",
+    "stream deck",
+    "control surface",
+    "accessibility",
+    "macro pad"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "extensionKind": [
+    "ui"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "The command policy is read from user settings only, so a workspace cannot loosen it.",
+      "restrictedConfigurations": [
+        "loupixdeck.commandPolicy",
+        "loupixdeck.allowedCommands"
+      ]
+    },
+    "virtualWorkspaces": true
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "loupixdeck.showStatus",
+        "title": "Show Connection Status",
+        "category": "LoupixDeck"
+      },
+      {
+        "command": "loupixdeck.showLog",
+        "title": "Show Log",
+        "category": "LoupixDeck"
+      },
+      {
+        "command": "loupixdeck.restartServer",
+        "title": "Restart Server",
+        "category": "LoupixDeck"
+      }
+    ],
+    "configuration": {
+      "title": "LoupixDeck",
+      "properties": {
+        "loupixdeck.enabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Run the local server that the LoupixDeck plugin connects to. Turn it off to disconnect this editor from the deck."
+        },
+        "loupixdeck.commandPolicy": {
+          "type": "string",
+          "scope": "application",
+          "enum": [
+            "any",
+            "allowList"
+          ],
+          "enumDescriptions": [
+            "The deck may run any command.",
+            "The deck may run only the commands listed in `#loupixdeck.allowedCommands#`."
+          ],
+          "default": "any",
+          "markdownDescription": "Which commands the deck may run.\n\nThe companion listens on a socket that only your user account can open (a Unix socket in a private folder, or a named pipe on Windows), and every connection must present a random token from a file only you can read. Nothing listens on the network. Any program running as you can read that token, just as it could already run anything else as you.\n\n`allowList` refuses every command not listed in `#loupixdeck.allowedCommands#`. Running tasks and launch configurations from the deck's folders, and bringing the window to the front, stay allowed.\n\nOnly your user settings count: a workspace's `.vscode/settings.json` cannot change this."
+        },
+        "loupixdeck.allowedCommands": {
+          "type": "array",
+          "scope": "application",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Command IDs the deck may run when `#loupixdeck.commandPolicy#` is `allowList`, for example `workbench.action.files.save`."
+        },
+        "loupixdeck.pushDiagnostics": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Push problem counts to the deck as they change. In very large workspaces with constant diagnostics churn, turn this off; the deck then reads the counts only when it connects or asks."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "package": "npx @vscode/vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "1.93.0"
+  }
+}

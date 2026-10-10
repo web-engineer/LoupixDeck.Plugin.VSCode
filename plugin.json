@@ -1,0 +1,12 @@
+{
+  "id": "vscode",
+  "name": "Visual Studio Code",
+  "version": "0.1.0",
+  "sdkVersion": "1.30.0",
+  "entryAssembly": "LoupixDeck.Plugin.VSCode.dll",
+  "platform": "All",
+  "author": "web-engineer",
+  "description": "Visual Studio Code from the deck: commands by ID through a companion extension, live problems, git, debug and task keys, and folders of tasks, launch configurations, problems and open editors.",
+  "projectUrl": "https://github.com/web-engineer/LoupixDeck.Plugin.VSCode",
+  "iconFile": "icon.png"
+}

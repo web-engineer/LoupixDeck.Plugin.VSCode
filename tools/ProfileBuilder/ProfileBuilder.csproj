@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Writes Profiles/LoupeDeck-CT-example.loupixprofile from the plugin's own command descriptors, so
+    the example's keys always carry the same layers the plugin gives a key in the editor.
+    Run "dotnet run" with this project from the repository root (see the README).
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../LoupixDeck.Plugin.VSCode.csproj" AdditionalProperties="LoupixSkipInstall=true" />
+    <!-- The plugin leaves the SDK to the host at run time; this tool is the host here. -->
+    <PackageReference Include="LoupixDeck.PluginSdk" Version="1.30.0" />
+  </ItemGroup>
+
+</Project>
