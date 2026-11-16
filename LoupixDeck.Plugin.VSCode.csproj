@@ -8,7 +8,7 @@
     <RootNamespace>LoupixDeck.Plugin.VSCode</RootNamespace>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>web-engineer</Authors>
     <Company>Web-Engine Limited</Company>
     <Copyright>Copyright (c) 2026 Web-Engine Limited, trading as web-engineer</Copyright>

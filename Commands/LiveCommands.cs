@@ -37,21 +37,26 @@ internal abstract class LiveCommandBase(VSCodePlugin plugin) : CodeCommandBase(p
 
         var view = Read(ctx, window, window.State);
         Show(ctx, Name, view.State);
-        return new AdjustmentValue(double.NaN, view.Value) { Detail = view.Detail };
+        return Compact
+            ? new AdjustmentValue(double.NaN, view.Detail is { Length: > 0 } d ? view.Value + "\n" + d : view.Value)
+            : new AdjustmentValue(double.NaN, view.Value) { Detail = view.Detail };
     }
+
+    /// <summary>True for keys laid out with <see cref="CodeKey.Compact"/>, which show the detail under the value in one box.</summary>
+    protected virtual bool Compact => false;
 
     /// <summary>What the key shows for this snapshot: the state name, one line of value and up to two lines of detail.</summary>
     protected abstract LiveView Read(CommandContext ctx, BridgeWindow window, EditorState state);
 
-    protected static ButtonStateDescriptor State(string name, string description, string background, string glyph) => new()
+    protected static ButtonStateDescriptor State(string name, string description, string background, string glyph, bool compact = false) => new()
     {
         Name = name,
         Description = description,
-        Layout = CodeKey.Live(background, glyph)
+        Layout = compact ? CodeKey.Compact(background, glyph) : CodeKey.Live(background, glyph)
     };
 
-    protected static ButtonStateDescriptor Offline(string glyph) =>
-        State(OfflineState, "No VS Code window with the companion is connected", CodeKey.DimHex, glyph);
+    protected static ButtonStateDescriptor Offline(string glyph, bool compact = false) =>
+        State(OfflineState, "No VS Code window with the companion is connected", CodeKey.DimHex, glyph, compact);
 
     /// <summary>"1 error", "3 errors".</summary>
     protected static string Count(int n, string one, string many) => n == 1 ? $"1 {one}" : $"{n} {many}";
@@ -69,6 +74,7 @@ internal sealed class ProblemsCommand(VSCodePlugin plugin) : LiveCommandBase(plu
 
     public override string Name => CommandName;
     public override IReadOnlyList<string> Sections { get; } = ["problems"];
+    protected override bool Compact => true;
 
     public override CommandDescriptor Descriptor { get; } = new()
     {
@@ -79,10 +85,10 @@ internal sealed class ProblemsCommand(VSCodePlugin plugin) : LiveCommandBase(plu
         Description = "Shows how many errors and warnings the workspace has, red for errors and amber for warnings. Tap to jump to the next problem (needs the companion to show the count).",
         States =
         [
-            State(CleanState, "No errors or warnings", CodeKey.OkHex, "\U000F05E1"), // mdi-check-circle-outline
-            State(WarningsState, "Warnings but no errors", CodeKey.WarningHex, "\U000F002A"), // mdi-alert-outline
-            State(ErrorsState, "At least one error", CodeKey.ErrorHex, "\U000F05D6"), // mdi-alert-circle-outline
-            Offline("\U000F05D6") // mdi-alert-circle-outline
+            State(CleanState, "No errors or warnings", CodeKey.OkHex, "\U000F05E1", compact: true), // mdi-check-circle-outline
+            State(WarningsState, "Warnings but no errors", CodeKey.WarningHex, "\U000F002A", compact: true), // mdi-alert-outline
+            State(ErrorsState, "At least one error", CodeKey.ErrorHex, "\U000F05D6", compact: true), // mdi-alert-circle-outline
+            Offline("\U000F05D6", compact: true) // mdi-alert-circle-outline
         ],
         ButtonLayout = new ButtonLayoutDescriptor { Mode = ButtonLayoutMode.None }
     };
@@ -219,6 +225,7 @@ internal sealed class UnsavedCommand(VSCodePlugin plugin) : LiveCommandBase(plug
 
     public override string Name => CommandName;
     public override IReadOnlyList<string> Sections { get; } = ["dirty"];
+    protected override bool Compact => true;
 
     public override CommandDescriptor Descriptor { get; } = new()
     {
@@ -229,9 +236,9 @@ internal sealed class UnsavedCommand(VSCodePlugin plugin) : LiveCommandBase(plug
         Description = "Shows how many files have unsaved changes. Tap to save them all (with the default shortcut when the companion is missing).",
         States =
         [
-            State(SavedState, "Everything is saved", CodeKey.OkHex, "\U000F18EB"), // mdi-content-save-check-outline
-            State(UnsavedState, "Files with unsaved changes", CodeKey.WarningHex, "\U000F0F43"), // mdi-content-save-alert-outline
-            Offline("\U000F0F44") // mdi-content-save-all-outline
+            State(SavedState, "Everything is saved", CodeKey.OkHex, "\U000F18EB", compact: true), // mdi-content-save-check-outline
+            State(UnsavedState, "Files with unsaved changes", CodeKey.WarningHex, "\U000F0F43", compact: true), // mdi-content-save-alert-outline
+            Offline("\U000F0F44", compact: true) // mdi-content-save-all-outline
         ],
         ButtonLayout = new ButtonLayoutDescriptor { Mode = ButtonLayoutMode.None }
     };

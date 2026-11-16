@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+- The workspace state carries the window's colour from the Peacock extension (`peacock.color`, or
+  `peacock.remoteColor` in a remote window when set), and is sent again when that setting
+  changes. Peacock is optional; without it the colour is `null`.
+
 ## 0.1.0
 
 First release.

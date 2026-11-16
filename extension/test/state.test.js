@@ -3,7 +3,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { StateTracker, Debouncer, diffSections, sortProblems, countProblems, SECTIONS } = require('../lib/state');
+const { StateTracker, Debouncer, diffSections, sortProblems, countProblems, hexColor, SECTIONS } = require('../lib/state');
 const { summarise } = require('../lib/git');
 const { createVscode, Uri, Range } = require('./support/vscode-stub');
 
@@ -89,7 +89,7 @@ test('snapshot has every section', () => {
     const state = /** @type {any} */ (tracker.snapshot());
     assert.deepEqual(Object.keys(state), [...SECTIONS]);
     assert.deepEqual(state.editor, { file: 'app.js', path: '/work/demo/src/app.js', language: 'javascript', dirty: false, line: 12, column: 4, selections: 1 });
-    assert.deepEqual(state.workspace, { name: 'demo', folders: ['file:///work/demo'], remote: null });
+    assert.deepEqual(state.workspace, { name: 'demo', folders: ['file:///work/demo'], remote: null, color: null });
     assert.deepEqual(state.debug, { state: 'inactive', session: null, reason: null });
     assert.deepEqual(state.tasks, { running: [], last: null });
     assert.deepEqual(state.terminal, { count: 0, last: null });
@@ -290,6 +290,30 @@ test('settings and lists follow configuration changes', async () => {
     assert.equal(/** @type {any} */ (pushes.at(-1)).settings.accessibilitySupport, 'on');
     assert.deepEqual(events.at(-1), { ev: 'lists', what: ['launch'] });
     tracker.dispose();
+});
+
+test('the workspace carries the Peacock colour and follows changes to it', async () => {
+    const { tracker, control, pushes } = setup();
+    control.workspaceSettings['peacock.color'] = '#FF00BB';
+    control.configChanged('peacock.color');
+    await sleep(400);
+    assert.equal(/** @type {any} */ (pushes.at(-1)).workspace.color, '#ff00bb');
+
+    control.workspaceSettings['peacock.remoteColor'] = '#123';
+    control.vscode.env.remoteName = 'ssh-remote';
+    assert.equal(/** @type {any} */ (tracker.snapshot()).workspace.color, '#112233', 'a remote window prefers the remote colour');
+    control.vscode.env.remoteName = undefined;
+    assert.equal(/** @type {any} */ (tracker.snapshot()).workspace.color, '#ff00bb');
+    tracker.dispose();
+});
+
+test('hex colours are normalised and anything else is dropped', () => {
+    assert.equal(hexColor('#ABC'), '#aabbcc');
+    assert.equal(hexColor(' #ff00bb '), '#ff00bb');
+    assert.equal(hexColor('#ff00bb80'), '#ff00bb');
+    assert.equal(hexColor('pink'), null);
+    assert.equal(hexColor('#ff00b'), null);
+    assert.equal(hexColor(undefined), null);
 });
 
 test('git summary reads the API and the command shapes', () => {

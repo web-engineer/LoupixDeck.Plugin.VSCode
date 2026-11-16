@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using LoupixDeck.Plugin.VSCode.Rendering;
 using LoupixDeck.PluginSdk;
 
 namespace LoupixDeck.Plugin.VSCode.Bridge;
@@ -89,6 +90,13 @@ internal sealed class BridgeWindow : IDisposable
 
     /// <summary>The remote name (<c>ssh-remote</c>, <c>wsl</c>…), null for a local window.</summary>
     public string? Remote => State.Workspace is { } w ? w.Remote : Registration.RemoteName;
+
+    /// <summary>
+    /// The window's Peacock colour, null when it has none. A companion that does not send it (an
+    /// older one, or one not reloaded since the update) leaves a local window to its folder's settings file.
+    /// </summary>
+    public PluginColor? Color => CodeKey.ParseHex(State.Workspace?.Color)
+        ?? (Remote is null ? PeacockSettings.ColorFor(Folders) : null);
 
     /// <summary>When the window started (from the registration), for ordering windows nobody focused yet.</summary>
     public DateTimeOffset StartedAt => Registration.StartedAt ?? DateTimeOffset.MinValue;

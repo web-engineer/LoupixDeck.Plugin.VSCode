@@ -149,7 +149,7 @@ final and not reach the command another way (for example through the editor's CL
 ```json
 {
   "window":   {"focused":true,"active":true,"lastFocused":1791650000000},
-  "workspace":{"name":"LoupixDeck","folders":["file:///…"],"remote":null},
+  "workspace":{"name":"LoupixDeck","folders":["file:///…"],"remote":null,"color":"#ff00bb"},
   "editor":   {"file":"Program.cs","path":"/…/Program.cs","language":"csharp","dirty":false,"line":12,"column":4,"selections":1} ,
   "dirty":    {"count":2},
   "problems": {"errors":3,"warnings":7,"infos":0},
@@ -177,6 +177,8 @@ final and not reach the command another way (for example through the editor's CL
 - `tasks.last` is the most recent task that ended, or `null`. `exitCode` can be `null`.
 - `terminal.last` comes from shell integration and is `null` until a command has finished in
   this window. `exitCode` can be `null`.
+- `workspace.color` is the window's colour from the Peacock extension as `#rrggbb`: `peacock.color`,
+  or `peacock.remoteColor` in a remote window when that is set. `null` when neither is set.
 - `settings.accessibilitySupport` is `on`, `off` or `auto`, from `editor.accessibilitySupport`.
 
 ## Versioning

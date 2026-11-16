@@ -178,7 +178,7 @@ public sealed class PluginTests : IDisposable
         {
             var layout = c.Descriptor.ButtonLayout;
             Assert.NotNull(layout);
-            Assert.Equal(CodeKey.BlueHex, layout!.BackgroundColor);
+            Assert.Equal(CodeKey.GraphiteHex, layout!.BackgroundColor);
             var caption = layout.Layers.Single(l => l.Name == "Caption");
             Assert.True(caption.Text!.Length <= 10, $"{c.Descriptor.CommandName}: caption '{caption.Text}' is too long");
         }
@@ -256,8 +256,9 @@ public sealed class PluginTests : IDisposable
 
         AdjustmentValue? Value(string name) => ((IValueDisplayCommand)Command(plugin, name)).GetValue(ctx);
 
-        Assert.Equal("3 errors", Value(ProblemsCommand.CommandName)?.Text);
-        Assert.Equal("7 warnings", Value(ProblemsCommand.CommandName)?.Detail);
+        // The problems key shows the detail under the value, in the same box.
+        Assert.Equal("3 errors\n7 warnings", Value(ProblemsCommand.CommandName)?.Text);
+        Assert.Null(Value(ProblemsCommand.CommandName)?.Detail);
         Assert.Equal(ProblemsCommand.ErrorsState, host.States[ProblemsCommand.CommandName]);
 
         var git = Value(GitCommand.CommandName);
@@ -518,43 +519,60 @@ public sealed class PluginTests : IDisposable
     }
 
     [Fact]
-    public async Task Long_lists_page_with_a_more_key()
+    public async Task Long_lists_page_in_place_with_the_more_key_and_the_first_dial()
     {
         var host = new FakeHost { Grid = new FolderGridInfo(4, 3, 8) };
         using var hub = new BridgeHub(new BridgeTestLog(), _dir);
         IReadOnlyList<FolderItem> items = Enumerable.Range(1, 25)
-            .Select(i => new FolderItem($"item {i}", CodeKey.Blue, () => Task.FromResult<string?>(null))).ToList();
+            .Select(i => new FolderItem($"item {i}", CodeKey.Graphite, () => Task.FromResult<string?>(null))).ToList();
         var list = new FolderList(hub, _ => Task.FromResult(items), _ => false, host);
-        var first = new ListFolder("Tasks", list, host, "No tasks");
+        var folder = new ListFolder("Tasks", list, host, "No tasks");
+        var changes = 0;
+        folder.EntriesChanged += () => changes++;
 
-        first.OnEnter();
+        folder.OnEnter();
         await Wait.Until(() => list.Items is not null, what: "the list to load");
 
-        // 11 slots besides Back on a 4x3 grid: 10 items and More on each page but the last.
-        var page1 = first.BuildEntries();
+        changes = 0;
+
+        // 11 slots besides Back on a 4x3 grid: 10 items and More on every page.
+        var page1 = folder.BuildEntries();
         Assert.Equal(11, page1.Count);
         Assert.DoesNotContain(page1, e => e.SlotIndex == 8);
         Assert.Equal("item 1", page1[0].Text);
         var more = page1[^1];
         Assert.StartsWith("More ›", more.Text);
         Assert.Contains("2/3", more.Text);
-        Assert.NotNull(more.OpensFolder);
-        Assert.True(first.RotaryOverrides.ContainsKey(0));
+        Assert.Null(more.OpensFolder);
 
-        var second = more.OpensFolder!;
-        second.OnEnter();
-        Assert.Equal("item 11", second.BuildEntries()[0].Text);
-        var third = second.BuildEntries()[^1].OpensFolder!;
-        third.OnEnter();
-        var last = third.BuildEntries();
-        Assert.Equal(5, last.Count);
-        Assert.Equal("item 25", last[^1].Text);
-        Assert.Null(last[^1].OpensFolder);
-        Assert.Empty(third.RotaryOverrides);
+        // More pages in place, without opening another folder.
+        await more.OnPress!();
+        Assert.Equal(1, folder.Page);
+        Assert.Equal("item 11", folder.BuildEntries()[0].Text);
+        Assert.Empty(host.Folders);
 
-        third.OnExit();
-        second.OnExit();
-        first.OnExit();
+        // The first dial goes on, stops at the last page, goes back, and its press returns to the start.
+        var dial = folder.RotaryOverrides[0];
+        await dial.OnRight!();
+        var last = folder.BuildEntries();
+        Assert.Equal(6, last.Count);
+        Assert.Equal("item 25", last[^2].Text);
+        Assert.Contains("1/3", last[^1].Text);
+        await folder.RotaryOverrides[0].OnRight!();
+        Assert.Equal(2, folder.Page);
+        await folder.RotaryOverrides[0].OnLeft!();
+        Assert.Equal(1, folder.Page);
+        await folder.RotaryOverrides[0].OnPress!();
+        Assert.Equal(0, folder.Page);
+        Assert.Equal(4, changes);
+
+        // The More key on the last page wraps round to the first.
+        await dial.OnRight!();
+        await dial.OnRight!();
+        await folder.BuildEntries()[^1].OnPress!();
+        Assert.Equal(0, folder.Page);
+
+        folder.OnExit();
     }
 
     [Fact]
@@ -567,10 +585,48 @@ public sealed class PluginTests : IDisposable
         await Wait.Until(() => folder.BuildEntries().FirstOrDefault()?.OnPress is not null, what: "the windows to list");
 
         var entry = Assert.Single(folder.BuildEntries());
-        Assert.Equal("Fake\nVS Code", entry.Text);
+        Assert.Empty(entry.Text);
+        Assert.Equal(CodeKey.Highlight, entry.BackColor);
+        var canvas = RecordingCanvas.Create(90, 90);
+        entry.Render!(canvas);
+        var calls = ((RecordingCanvas)(object)canvas).Calls;
+        Assert.Contains(calls, c => c.Method == "DrawSymbol" && (string?)c.Args[0] == CodeKey.WindowSymbol);
+        Assert.Contains(calls, c => c.Method == "DrawText" && (string?)c.Args[0] == "Fake");
+        Assert.Contains(calls, c => c.Method == "DrawRoundedRectangle");
         await entry.OnPress!();
         lock (server.Requests) Assert.Contains(server.Requests, r => (string?)r["op"] == "focus");
         folder.OnExit();
+    }
+
+    [Fact]
+    public async Task Peacock_colour_paints_window_and_editor_keys()
+    {
+        var (plugin, host, _) = await Connected(s =>
+        {
+            ((JsonObject)s.State["workspace"]!)["color"] = "#ff00bb";
+            s.Lists["editors"] = new JsonArray(
+                new JsonObject { ["ref"] = "e1", ["label"] = "a.cs", ["active"] = true },
+                new JsonObject { ["ref"] = "e2", ["label"] = "b.cs" });
+        });
+        var pink = PluginColor.FromRgb(0xFF, 0x00, 0xBB);
+
+        await Command(plugin, WindowsFolderCommand.Name).Execute(Ctx(host));
+        var windows = host.Folders[^1];
+        windows.OnEnter();
+        await Wait.Until(() => windows.BuildEntries().FirstOrDefault()?.OnPress is not null, what: "the windows to list");
+        Assert.Equal(pink, Assert.Single(windows.BuildEntries()).BackColor);
+        windows.OnExit();
+
+        await Command(plugin, "VSCode.OpenEditors").Execute(Ctx(host));
+        var editors = host.Folders[^1];
+        editors.OnEnter();
+        await Wait.Until(() => editors.BuildEntries().Count == 2 && editors.BuildEntries()[0].OnPress is not null, what: "the editors to list");
+        var entries = editors.BuildEntries();
+        Assert.Equal(CodeKey.Lighten(pink), entries[0].BackColor);
+        Assert.True(entries[0].Bold);
+        Assert.Equal(pink, entries[1].BackColor);
+        Assert.Equal(PluginColor.White, entries[1].TextColor);
+        editors.OnExit();
     }
 
     // ---- settings and requirements ----
@@ -654,10 +710,87 @@ public sealed class PluginTests : IDisposable
     [InlineData(null, "VS Code")]
     public void Editor_names_fit_a_key(string? app, string expected) => Assert.Equal(expected, WindowsFolderCommand.AppName(app));
 
+    [Theory]
+    [InlineData("#ff00bb", 0xFF, 0x00, 0xBB)]
+    [InlineData("#ABC", 0xAA, 0xBB, 0xCC)]
+    [InlineData(" #11223380 ", 0x11, 0x22, 0x33)]
+    public void Hex_colours_parse(string hex, int r, int g, int b) =>
+        Assert.Equal(PluginColor.FromRgb((byte)r, (byte)g, (byte)b), CodeKey.ParseHex(hex));
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("pink")]
+    [InlineData("#ff00b")]
+    [InlineData("ff00bb")]
+    public void Other_colours_do_not_parse(string? hex) => Assert.Null(CodeKey.ParseHex(hex));
+
+    [Fact]
+    public void Peacock_colour_is_read_from_the_folder_settings()
+    {
+        var dir = Directory.CreateTempSubdirectory("lxv-peacock").FullName;
+        try
+        {
+            var folders = new[] { new Uri(dir).AbsoluteUri };
+            Assert.Null(PeacockSettings.ColorFor(folders));
+            Directory.CreateDirectory(Path.Combine(dir, ".vscode"));
+            File.WriteAllText(Path.Combine(dir, ".vscode", "settings.json"), """
+                {
+                    // Peacock writes these
+                    "workbench.colorCustomizations": { "titleBar.activeBackground": "#ff00bb" },
+                    "peacock.color": "#ff00bb",
+                }
+                """);
+            Assert.Equal(PluginColor.FromRgb(0xFF, 0x00, 0xBB), PeacockSettings.ColorFor(folders));
+            Assert.Null(PeacockSettings.ColorFor([folders[0], folders[0]]));
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
+    }
+
+    [Fact]
+    public void Text_stays_readable_on_window_colours()
+    {
+        Assert.Equal(PluginColor.White, CodeKey.TextOn(PluginColor.FromRgb(0xFF, 0x00, 0xBB)));
+        Assert.Equal(CodeKey.DarkText, CodeKey.TextOn(PluginColor.FromRgb(0xFF, 0xFF, 0x00)));
+        Assert.Equal(PluginColor.White, CodeKey.TextOn(CodeKey.Graphite));
+    }
+
     [Fact]
     public void Extension_hints_use_a_readable_name()
     {
         Assert.Equal("Claude Code", CodeCommandBase.ExtensionName("anthropic.claude-code"));
         Assert.Equal("gitlens", CodeCommandBase.ExtensionName("eamodio.gitlens"));
+    }
+}
+
+/// <summary>An <see cref="IRenderCanvas"/> that records the calls made on it.</summary>
+public class RecordingCanvas : System.Reflection.DispatchProxy
+{
+    public List<(string Method, object?[] Args)> Calls { get; } = [];
+    private int _width;
+    private int _height;
+
+    public static IRenderCanvas Create(int width, int height)
+    {
+        var canvas = Create<IRenderCanvas, RecordingCanvas>();
+        var self = (RecordingCanvas)(object)canvas;
+        self._width = width;
+        self._height = height;
+        return canvas;
+    }
+
+    protected override object? Invoke(System.Reflection.MethodInfo? method, object?[]? args)
+    {
+        switch (method?.Name)
+        {
+            case "get_Width": return _width;
+            case "get_Height": return _height;
+            case "MeasureText": return 0f;
+        }
+
+        Calls.Add((method?.Name ?? string.Empty, args ?? []));
+        return null;
     }
 }

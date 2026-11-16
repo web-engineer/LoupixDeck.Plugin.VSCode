@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 	<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
 		<Metadata>
-			<Identity Language="en-US" Id="loupixdeck-companion" Version="0.1.0" Publisher="web-engineer" />
+			<Identity Language="en-US" Id="loupixdeck-companion" Version="0.2.0" Publisher="web-engineer" />
 			<DisplayName>LoupixDeck Companion</DisplayName>
 			<Description xml:space="preserve">Connects Visual Studio Code to the LoupixDeck plugin: run any command from a deck key and see live problems, git, debug, task and editor state on the deck.</Description>
 			<Tags>loupixdeck,loupedeck,stream deck,control surface,accessibility,macro pad,git</Tags>

@@ -48,7 +48,8 @@ untrusted folder.
 Nothing leaves your computer. The companion has no telemetry and makes no network requests. It
 talks only to the LoupixDeck plugin over the local socket, and sends it the state listed above:
 file names and paths, cursor position, problem counts and messages, the git branch and change
-counts, task, launch configuration and terminal names, and recent folder paths.
+counts, task, launch configuration and terminal names, recent folder paths and the window's
+Peacock colour.
 
 ## Settings
 
@@ -69,6 +70,21 @@ counts, task, launch configuration and terminal names, and recent folder paths.
 
 The context key `loupixdeck.connected` is true while a deck is connected, for your own
 keybindings and `when` clauses.
+
+## Window colours (Peacock)
+
+If you use the [Peacock](https://marketplace.visualstudio.com/items?itemName=johnpapa.vscode-peacock)
+extension to colour your windows, the deck uses the same colour: each key in the windows folder
+takes its window's colour, and the open editors folder takes the colour of the window it lists.
+The companion reads the `peacock.color` setting (or `peacock.remoteColor` in a remote window,
+when that is set) and sends it with the workspace state; a change shows on the deck within a
+moment. For a window whose companion does not send the colour yet (an older version, or a window
+not reloaded since the update), the plugin reads `peacock.color` from the folder's
+`.vscode/settings.json` itself. That fallback covers local single-folder windows only.
+
+Peacock is optional. The companion does not depend on it or talk to it; it only reads the
+setting Peacock writes to the workspace's `.vscode/settings.json`. Without Peacock, or in a
+window it has not coloured, the keys keep the usual VS Code blue.
 
 ## Remote windows
 

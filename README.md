@@ -12,7 +12,10 @@ without hunting through panels and menus:
   unsaved files, active file and cursor position, the last task's and terminal command's result,
   and whether screen reader mode is on;
 - folders that put live content on the keys, one item per key: tasks, launch configurations,
-  problems, open editors, recent folders, terminals and windows. Press one to run or open it;
+  problems, open editors, recent folders, terminals and windows. Press one to run or open it.
+  Window keys, and the open editors of a window, take the window's colour when the optional
+  [Peacock](https://marketplace.visualstudio.com/items?itemName=johnpapa.vscode-peacock)
+  extension has set one (see [Window colours](docs/companion-extension.md#window-colours-peacock));
 - keys for one task, one launch configuration, one folder, or any command by its ID.
 
 Keys run commands by ID through a small companion extension, so they keep working when you
@@ -199,10 +202,12 @@ A test fails if the package no longer matches the plugin's commands.
 
 ## Keys and commands
 
-Command ids are permanent. VS Code keys share one look: white icons and text on VS Code blue
-(`#007ACC`). Live keys change colour with their state: red for errors and failures, amber for
-warnings, unsaved changes and a paused debugger, green for success, dark grey when there is
-nothing to show. Each key gets ordinary layers you can restyle in the button editor.
+Command ids are permanent. VS Code keys share one look: white icons and text on graphite grey
+(`#3C3C3C`). Live keys change colour with their state: red for errors and failures, amber for
+warnings, unsaved changes and a paused debugger, green for success, a darker grey (`#252526`)
+when there is nothing to show. Each key gets ordinary layers you can restyle in the button
+editor. The background is stored with each key when you add it, so keys added before an update
+keep their old colour until you add them again or change it in the button editor.
 
 Commands come in 13 groups in the command picker: *VS Code* (the editor, windows, live keys,
 folders and parameterised keys), *Files*, *Navigate*, *Edit*, *Search*, *View*, *Terminal*,
@@ -233,12 +238,17 @@ The problems dial (`VSCode.ProblemSteps`) also shows the count next to the dial:
 
 These keys open a folder with one key per item from the window keys act on. Problems are red or
 amber by severity; the active editor and terminal are highlighted. When there are more items than
-keys, the last key is **More ›** and the host's Back key returns to the previous page; dial 0
-turns pages forward. An open folder refreshes itself when the list changes in the editor.
+keys, the last key is **More ›**, which moves to the next page and wraps round to the first.
+The first dial turns to the next or previous page, and pressing it goes back to the first page.
+Paging stays in the same folder, so the Back key always leaves it in one press. An open folder
+refreshes itself when the list changes in the editor.
+
+While any folder is open, LoupixDeck turns off the physical buttons, and the dials do only what
+the folder gives them; these folders use only the first dial.
 
 | Command id | Lists | Press |
 |---|---|---|
-| `VSCode.Windows` | Every connected window: workspace and editor | Brings it to the front, which also makes it the window keys act on |
+| `VSCode.Windows` | Every connected window: workspace name, plus the editor when it is not VS Code and the remote | Brings it to the front, which also makes it the window keys act on |
 | `VSCode.Tasks` | Tasks, as in **Run Task** | Runs it |
 | `VSCode.DebugConfigs` | Launch configurations and compounds | Starts debugging |
 | `VSCode.ProblemList` | The first 40 problems, errors first, as `file:line` and message | Opens the file there |

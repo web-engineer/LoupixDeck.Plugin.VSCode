@@ -73,12 +73,15 @@ internal sealed record WindowInfo(bool Focused, bool Active, DateTimeOffset? Las
         : new WindowInfo(Json.Bool(o, "focused") ?? false, Json.Bool(o, "active") ?? false, Json.Time(o, "lastFocused"));
 }
 
-/// <summary>The workspace: its name, folder URIs and remote name (<c>ssh-remote</c>, <c>wsl</c>…; null when local).</summary>
-internal sealed record WorkspaceInfo(string? Name, IReadOnlyList<string> Folders, string? Remote)
+/// <summary>
+/// The workspace: its name, folder URIs, remote name (<c>ssh-remote</c>, <c>wsl</c>…; null when local)
+/// and its Peacock colour as <c>#rrggbb</c> (null when Peacock sets none).
+/// </summary>
+internal sealed record WorkspaceInfo(string? Name, IReadOnlyList<string> Folders, string? Remote, string? Color = null)
 {
     public static WorkspaceInfo? From(JsonObject? o) => o is null
         ? null
-        : new WorkspaceInfo(Json.Str(o, "name"), Json.Strings(o, "folders"), Json.Str(o, "remote"));
+        : new WorkspaceInfo(Json.Str(o, "name"), Json.Strings(o, "folders"), Json.Str(o, "remote"), Json.Str(o, "color"));
 }
 
 /// <summary>The active text editor; <c>Line</c> and <c>Column</c> are 1-based.</summary>

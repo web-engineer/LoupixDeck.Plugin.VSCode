@@ -2,7 +2,7 @@
   "name": "loupixdeck-companion",
   "displayName": "LoupixDeck Companion",
   "description": "Connects Visual Studio Code to the LoupixDeck plugin: run any command from a deck key and see live problems, git, debug, task and editor state on the deck.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "web-engineer",
   "license": "MIT",
   "author": {

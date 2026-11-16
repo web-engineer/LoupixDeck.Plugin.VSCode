@@ -66,7 +66,9 @@ internal sealed class ListFolderCommand : CodeCommandBase
             return Task.CompletedTask;
         }
 
-        var list = new FolderList(Plugin.Hub, LoadAsync, c => c.AffectsList(_what), ctx.Host.Logger);
+        // Open editors take the window's Peacock colour, which comes with the workspace section.
+        var list = new FolderList(Plugin.Hub, LoadAsync,
+            c => c.AffectsList(_what) || _what == "editors" && c.Affects("workspace"), ctx.Host.Logger);
         ctx.Host.OpenFolder(new ListFolder(_title, list, ctx.Host, _empty));
         return Task.CompletedTask;
     });
@@ -102,16 +104,28 @@ internal sealed class ListFolderCommand : CodeCommandBase
             {
                 "error" => CodeKey.Error,
                 "warning" => CodeKey.Warning,
-                _ => CodeKey.Blue
+                _ => CodeKey.Graphite
             }, press),
-            "editors" => new FolderItem(ItemText((item.Dirty ? "● " : string.Empty) + item.Label, item.Detail),
-                item.Active ? CodeKey.BrightBlue : CodeKey.Blue, press, item.Active),
-            "terminals" => new FolderItem(ItemText(item.Label, item.Detail), item.Active ? CodeKey.BrightBlue : CodeKey.Blue, press, item.Active),
-            "launch" => new FolderItem(ItemText(item.Label, item.Kind == "compound" ? Plugin.Host.Tr("compound") : item.Detail), CodeKey.Blue, press),
+            "editors" => EditorItem(window, item, press),
+            "terminals" => new FolderItem(ItemText(item.Label, item.Detail), item.Active ? CodeKey.Highlight : CodeKey.Graphite, press, item.Active),
+            "launch" => new FolderItem(ItemText(item.Label, item.Kind == "compound" ? Plugin.Host.Tr("compound") : item.Detail), CodeKey.Graphite, press),
             // The detail of a recent entry is its full path: too long for a key, the name says enough.
-            "recent" => new FolderItem(ItemText(item.Label, item.Kind == "workspace" ? Plugin.Host.Tr("workspace") : null), CodeKey.Blue, press),
-            _ => new FolderItem(ItemText(item.Label, item.Detail), CodeKey.Blue, press)
+            "recent" => new FolderItem(ItemText(item.Label, item.Kind == "workspace" ? Plugin.Host.Tr("workspace") : null), CodeKey.Graphite, press),
+            _ => new FolderItem(ItemText(item.Label, item.Detail), CodeKey.Graphite, press)
         };
+    }
+
+    /// <summary>
+    /// An open editor, in the window's Peacock colour when it has one (the active editor a shade
+    /// lighter), so the editors read as belonging to that window.
+    /// </summary>
+    private static FolderItem EditorItem(BridgeWindow window, BridgeItem item, Func<Task<string?>> press)
+    {
+        var text = ItemText((item.Dirty ? "● " : string.Empty) + item.Label, item.Detail);
+        if (window.Color is not { } color)
+            return new FolderItem(text, item.Active ? CodeKey.Highlight : CodeKey.Graphite, press, item.Active);
+        var back = item.Active ? CodeKey.Lighten(color) : color;
+        return new FolderItem(text, back, press, item.Active) { TextColor = CodeKey.TextOn(back) };
     }
 
     /// <summary>The label (wrapping over up to three lines) and a one-line detail under it, both cut to fit a key.</summary>
@@ -123,8 +137,9 @@ internal sealed class ListFolderCommand : CodeCommandBase
 }
 
 /// <summary>
-/// Opens a folder with a key for every connected VS Code window (workspace name and editor), the
-/// one keys act on highlighted. Pressing one brings that window to the front, which also makes it
+/// Opens a folder with a key for every connected VS Code window: a window icon over the workspace
+/// name, plus the editor when it is not VS Code itself and the remote. Each key takes the window's
+/// Peacock colour when it has one; the window keys act on is framed and bold. Pressing one brings that window to the front, which also makes it
 /// the window the other keys act on.
 /// </summary>
 internal sealed class WindowsFolderCommand(VSCodePlugin plugin) : CodeCommandBase(plugin)
@@ -167,9 +182,13 @@ internal sealed class WindowsFolderCommand(VSCodePlugin plugin) : CodeCommandBas
         {
             var isTarget = ReferenceEquals(w, target);
             var name = w.WorkspaceName is { Length: > 0 } ws ? ws : plugin.Host.Tr("No folder");
-            var detail = AppName(w.App) + (w.Remote is { Length: > 0 } remote ? " · " + remote : string.Empty);
-            return new FolderItem(ListFolderCommand.ItemText(name, detail), isTarget ? CodeKey.BrightBlue : CodeKey.Blue,
-                () => FocusAsync(plugin, w), isTarget);
+            var back = w.Color ?? (isTarget ? CodeKey.Highlight : CodeKey.Graphite);
+            return new FolderItem(ListFolderCommand.ItemText(name, Detail(w), 22), back, () => FocusAsync(plugin, w), isTarget)
+            {
+                TextColor = CodeKey.TextOn(back),
+                Symbol = CodeKey.WindowSymbol,
+                Framed = isTarget
+            };
         }).ToList();
     }
 
@@ -180,6 +199,16 @@ internal sealed class WindowsFolderCommand(VSCodePlugin plugin) : CodeCommandBas
         // An editor before VS Code 1.128 cannot raise one window; bringing its app forward is the best there is.
         if (EditorApps.ForWindow(window) is { } app && await EditorApps.ActivateAsync(plugin.Host, app).ConfigureAwait(false)) return null;
         return "Failed";
+    }
+
+    /// <summary>The line under the name: the editor when it is not VS Code (the icon says that), and the remote.</summary>
+    internal static string? Detail(BridgeWindow window)
+    {
+        var app = AppName(window.App);
+        var parts = new[] { app == "VS Code" ? null : app, window.Remote is { Length: > 0 } remote ? remote : null }
+            .Where(p => p is not null);
+        var detail = string.Join(" · ", parts);
+        return detail.Length > 0 ? detail : null;
     }
 
     /// <summary>A short name for the editor, to fit a key: "VS Code", "Insiders", "Cursor"…</summary>

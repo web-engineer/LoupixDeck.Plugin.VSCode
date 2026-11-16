@@ -130,6 +130,19 @@ function shorten(text, max) {
     return flat.length <= max ? flat : flat.slice(0, max - 1) + '…';
 }
 
+/**
+ * A `#rgb`, `#rrggbb` or `#rrggbbaa` colour as lower-case `#rrggbb` (alpha dropped); null for anything else.
+ * @param {unknown} value
+ * @returns {string | null}
+ */
+function hexColor(value) {
+    if (typeof value !== 'string') return null;
+    const m = /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.exec(value.trim());
+    if (!m) return null;
+    const hex = m[1].toLowerCase();
+    return '#' + (hex.length === 3 ? hex.replace(/./g, c => c + c) : hex.slice(0, 6));
+}
+
 class StateTracker {
     /**
      * @param {typeof import('vscode')} vscode
@@ -266,6 +279,7 @@ class StateTracker {
                 || e.affectsConfiguration('editor.minimap.enabled')) this.touch('settings');
             if (e.affectsConfiguration('launch')) this.touchLists('launch');
             if (e.affectsConfiguration('tasks')) this.touchLists('tasks');
+            if (e.affectsConfiguration('peacock.color') || e.affectsConfiguration('peacock.remoteColor')) this.touch('workspace');
         });
     }
 
@@ -375,11 +389,25 @@ class StateTracker {
 
     _workspace() {
         const ws = this._vscode.workspace;
+        const remote = this._vscode.env.remoteName ?? null;
         return {
             name: ws.name ?? null,
             folders: (ws.workspaceFolders ?? []).map(f => f.uri.toString()),
-            remote: this._vscode.env.remoteName ?? null,
+            remote,
+            color: this._peacockColor(remote),
         };
+    }
+
+    /**
+     * The window's colour from the Peacock extension (`peacock.color`, or `peacock.remoteColor` in a
+     * remote window when set), as `#rrggbb`. Null when unset or not a hex colour.
+     * @param {string | null} remote
+     * @returns {string | null}
+     */
+    _peacockColor(remote) {
+        const config = this._vscode.workspace.getConfiguration('peacock');
+        const value = (remote && hexColor(config.get('remoteColor'))) || hexColor(config.get('color'));
+        return value || null;
     }
 
     _editor() {
@@ -589,5 +617,6 @@ module.exports = {
     countProblems,
     diffSections,
     shorten,
+    hexColor,
     tabKey,
 };
